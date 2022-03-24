@@ -25,7 +25,6 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-// Home renders the home page
 func handleHome(w http.ResponseWriter, r *http.Request) {
 	setNoCache(w)
 	http.FileServer(http.Dir("./html")).ServeHTTP(w, r)
