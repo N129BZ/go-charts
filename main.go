@@ -123,7 +123,7 @@ func handleDatafiles(w http.ResponseWriter, r *http.Request) {
 	parts := strings.Split(r.RequestURI, "/")
 	cid := parts[len(parts)-1]
 	// read and send METARS json
-	data, err := os.ReadFile("./metars.json")
+	data, err := os.ReadFile("./workfiles/metars.json")
 	if err != nil {
 		log.Println(err)
 	} else {
@@ -134,7 +134,7 @@ func handleDatafiles(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// read and send TAFS json
-	data, err = os.ReadFile("./tafs.json")
+	data, err = os.ReadFile("./workfiles/tafs.json")
 	if err != nil {
 		log.Println(err)
 	} else {
@@ -145,7 +145,7 @@ func handleDatafiles(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// read and send PIREPS json
-	data, err = os.ReadFile("./pireps.json")
+	data, err = os.ReadFile("./workfiles/pireps.json")
 	if err != nil {
 		log.Println(err)
 	} else {

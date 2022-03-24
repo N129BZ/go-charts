@@ -2,3 +2,7 @@ static/data/Caribbean.mbtiles
 static/data/Helicopter.mbtiles
 static/data/Sectional.mbtiles
 static/data/Terminal.mbtiles
+workfiles/metars.json
+workfiles/pireps.json
+.gitignore
+workfiles/tafs.json

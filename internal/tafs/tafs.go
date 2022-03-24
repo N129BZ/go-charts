@@ -1,11 +1,11 @@
 package tafs
 
 import (
-	"log"
-	"fmt"
 	"encoding/json"
 	"encoding/xml"
+	"fmt"
 	"io/ioutil"
+	"log"
 	"net"
 	"net/http"
 	"os"
@@ -37,7 +37,7 @@ type DataSource struct {
 type Data struct {
 	XMLName    xml.Name `xml:"data" json:"-"`
 	NumResults int32    `xml:"num_results,attr"`
-	Tafs        []Taf   `xml:"TAF"`
+	Tafs       []Taf    `xml:"TAF"`
 }
 
 type SkyCondition struct {
@@ -113,7 +113,7 @@ type Taf struct {
 
 // SaveAsJSONFile downloads xml file from ADDS weather server and converts to a JSON string
 func (r *Response) SaveAsJSONFile(url string) (err error) {
-	
+
 	t := &http.Transport{
 		Dial: (&net.Dialer{
 			Timeout:   60 * time.Second,
@@ -148,7 +148,7 @@ func (r *Response) SaveAsJSONFile(url string) (err error) {
 		return err
 	}
 
-	jsonfile := "./tafs.json"
+	jsonfile := "./workfiles/tafs.json"
 	err = os.Remove(jsonfile)
 	if err != nil {
 		log.Println(err)
@@ -187,4 +187,3 @@ func (r *Response) ToJsonIndented() (s string, err error) {
 	s = string(b)
 	return
 }
-	

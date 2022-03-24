@@ -128,7 +128,7 @@ func (r *Response) SaveAsJSONFile(url string) (err error) {
 		return err
 	}
 
-	jsonfile := "./pireps.json"
+	jsonfile := "./workfiles/pireps.json"
 	err = os.Remove(jsonfile)
 	if err != nil {
 		log.Println(err)
