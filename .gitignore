@@ -6,3 +6,5 @@ workfiles/metars.json
 workfiles/pireps.json
 .gitignore
 workfiles/tafs.json
+static/data/ed_256.mbtiles
+static/data/osm.mbtiles
