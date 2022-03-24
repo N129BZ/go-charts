@@ -232,8 +232,6 @@ func readMbTilesMetadata(fname string, db *sql.DB) map[string]string {
 			meta[name] = val
 		}
 	}
-	// determine extent of layer if not given.. Openlayers kinda needs this, or it can happen that it tries to do
-	// a billion request do down-scale high-res pngs that aren't even there (i.e. all 404s)
 	if _, ok := meta["bounds"]; !ok {
 		maxZoomInt, _ := strconv.ParseInt(meta["maxzoom"], 10, 32)
 		rows, err = db.Query("SELECT min(tile_column), min(tile_row), max(tile_column), max(tile_row) FROM tiles WHERE zoom_level=?", maxZoomInt)
@@ -247,16 +245,6 @@ func readMbTilesMetadata(fname string, db *sql.DB) map[string]string {
 		lonmin, latmin := tileToDegree(int(maxZoomInt), xmin, ymin)
 		lonmax, latmax := tileToDegree(int(maxZoomInt), xmax+1, ymax+1)
 		meta["bounds"] = fmt.Sprintf("%f,%f,%f,%f", lonmin, latmin, lonmax, latmax)
-	}
-
-	// check if it is vectortiles and we have a style, then add the URL to metadata...
-	if format, ok := meta["format"]; ok && format == "pbf" {
-		_, file := filepath.Split(fname)
-		if _, err := os.Stat("./static/data/styles/" + file + "/style.json"); err == nil {
-			// We found a style!
-			meta["stratux_style_url"] = "./static/data/styles/" + file + "/style.json"
-		}
-
 	}
 	return meta
 }
