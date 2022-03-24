@@ -57,7 +57,11 @@ var config Configuration
 
 // GetConfigAsString returns configuration data as a json string for client use
 func GetConfigAsString() (string, error) {
-	LoadConfig()
+	err := LoadConfig()
+	if err != nil {
+		log.Println(err)
+		return "", err
+	}
 	data, err := json.Marshal(&config)
 	if err != nil {
 		return "", err

@@ -24,19 +24,6 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-func handleHome(w http.ResponseWriter, r *http.Request) {
-	setNoCache(w)
-	http.FileServer(http.Dir("./html")).ServeHTTP(w, r)
-}
-
-func handleConfig(w http.ResponseWriter, r *http.Request) {
-	scfg, err := GetConfigAsString()
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Fprintf(w, scfg)
-}
-
 type positionHistory struct {
 	ReportTime string  `json:"report_time"`
 	Longitude  float64 `json:"longitude"`
@@ -50,13 +37,28 @@ type jsonMessage struct {
 	Payload     string
 }
 
+func handleIndex(w http.ResponseWriter, r *http.Request) {
+	setNoCache(w)
+	http.FileServer(http.Dir("./html")).ServeHTTP(w, r)
+}
+
+// handleConfig returns configuration data to the client
+func handleConfig(w http.ResponseWriter, r *http.Request) {
+	scfg, err := GetConfigAsString()
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Fprintf(w, scfg)
+}
+
+// handlePositionHistory returns the last saved position information to the client
 func handlePositionHistory(w http.ResponseWriter, r *http.Request) {
 	path := "./static/positionhistory.db"
 	db, err := sql.Open("sqlite3", "file:"+path+"?mode=ro")
 	if err != nil {
 		log.Fatal(err)
 	}
-	sql := "SELECT * FROM position_history WHERE id IN ( SELECT max( id ) FROM position_history )"
+	sql := "SELECT longitude, latitude, heading FROM position_history WHERE id IN ( SELECT max( id ) FROM position_history )"
 	rows, err := db.Query(sql)
 	if err != nil {
 		log.Fatal(err)
@@ -65,14 +67,14 @@ func handlePositionHistory(w http.ResponseWriter, r *http.Request) {
 
 	for rows.Next() {
 		var lon, lat float64
-		var id, hdg, alt int32
-		var dttime string
-		rows.Scan(&id, &dttime, &lon, &lat, &hdg, &alt)
+		var hdg int32
+		rows.Scan(&lon, &lat, &hdg)
 		jsonout := fmt.Sprintf(`{ "longitude": %v, "latitude": %v, "heading": %v }`, lon, lat, hdg)
 		fmt.Fprintf(w, jsonout)
 	}
 }
 
+// handleSaveHistory saves POST'd position data to the positionhistory.db sqlite database
 func handleSaveHistory(w http.ResponseWriter, r *http.Request) {
 	var ph positionHistory
 	d := json.NewDecoder(r.Body)
@@ -96,6 +98,7 @@ func handleSaveHistory(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(200)
 }
 
+// handleAirports is the cue from the client that it is ready for Airport json data
 func handleAirports(w http.ResponseWriter, r *http.Request) {
 	parts := strings.Split(r.RequestURI, "/")
 	cid := parts[len(parts)-1]
@@ -104,6 +107,7 @@ func handleAirports(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
+// getAirports go routine to read the airports.json file and send to client via websocket
 func getAirports(cid string) {
 	filehandlerMutex.Lock()
 	data, err := os.ReadFile("./static/airports.json") // For read access.
@@ -117,7 +121,8 @@ func getAirports(cid string) {
 	sendToClient(msg, cid)
 }
 
-func handleDatafiles(w http.ResponseWriter, r *http.Request) {
+// handleWeatherDataFiles calls the 3 weather download goroutines and sends data to client via websocket
+func handleWeatherDataFiles(w http.ResponseWriter, r *http.Request) {
 	filehandlerMutex.Lock()
 	parts := strings.Split(r.RequestURI, "/")
 	cid := parts[len(parts)-1]
@@ -248,7 +253,7 @@ func readMbTilesMetadata(fname string, db *sql.DB) map[string]string {
 	return meta
 }
 
-// Scans data dir for all .db and .mbtiles files and returns json representation of all metadata values
+// handleTilesets scans data dir for all .db and .mbtiles files and returns json representation of all metadata values
 func handleTilesets(w http.ResponseWriter, r *http.Request) {
 	files, err := ioutil.ReadDir("./static/data/")
 	if err != nil {
@@ -457,13 +462,13 @@ func readLoop(conn *webSocketConnection) {
 }
 
 func main() {
-	http.HandleFunc("/", handleHome)
+	http.HandleFunc("/", handleIndex)
 	http.HandleFunc("/ws/", handleWsEndpoint)
 	http.HandleFunc("/getconfig", handleConfig)
 	http.HandleFunc("/gethistory", handlePositionHistory)
 	http.HandleFunc("/tiles/tilesets", handleTilesets)
 	http.HandleFunc("/tiles/", handleTile)
-	http.HandleFunc("/getdatafiles/", handleDatafiles)
+	http.HandleFunc("/getdatafiles/", handleWeatherDataFiles)
 	http.HandleFunc("/getairports/", handleAirports)
 	http.HandleFunc("/savehistory", handleSaveHistory)
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("./static/"))))
